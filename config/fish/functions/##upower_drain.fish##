@@ -1,0 +1,17 @@
+
+function upower_drain --description "Check battery drain rate"
+    set battery_info (upower -i /org/freedesktop/UPower/devices/battery_BAT0 2>/dev/null)
+    set found_info false
+    
+    echo "=== Power Consumption Info ==="
+    for line in $battery_info
+        if string match -q "*energy-rate:*" $line; or string match -q "*voltage:*" $line
+            echo (string trim $line)
+            set found_info true
+        end
+    end
+    
+    if not $found_info
+        echo "Power consumption info not found."
+    end
+end

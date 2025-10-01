@@ -1,0 +1,81 @@
+;;;; Emacs Bookmark Format Version 1;;;; -*- coding: utf-8-emacs; mode: lisp-data -*-
+;;; This format is meant to be slightly human-readable;
+;;; nevertheless, you probably don't want to edit it.
+;;; -*- End Of Bookmark File Format Version Stamp -*-
+(("business-photo-upload.el"
+ (filename . "~/.emacs.d/my-lisp/business-photo-upload.el")
+ (front-context-string)
+ (rear-context-string . "ad.el ends here\n")
+ (position . 19973)
+ (last-modified 26770 61208 203532 871000))
+("\"Hair Studio Celine Upload Image\""
+ (filename . "~/gtd/hair-studio-celine-media-upload.org")
+ (front-context-string . "#+ATTR_ORG: :wid")
+ (rear-context-string . "\n\n***** Preview\n")
+ (position . 1106)
+ (last-modified 26774 24743 769138 681000))
+("노후계획"
+ (filename . "~/gtd/investment.org")
+ (front-context-string)
+ (rear-context-string . "기별 점검, 연간 전략 수정\n")
+ (position . 2882)
+ (last-modified 26742 52030 619113 381000))
+("changbi-2024.org"
+ (filename . "~/writing/changbi/changbi-2024.org")
+ (front-context-string . "\n사람에게도\n알려지지 않은 나")
+ (rear-context-string . "들맨들 정성스럽고 단정하다.\n")
+ (position . 1222))
+("models.persistentmodels"
+ (filename . "~/git/thehair/config/models.persistentmodels")
+ (front-context-string . "\nService\n    cat")
+ (rear-context-string . "  deriving Show\n")
+ (position . 865))
+("\"The Hair\""
+ (filename . "~/git/thehair/")
+ (front-context-string . ".gitignore\n  -rw")
+ (rear-context-string . "57 May  2 20:08 ")
+ (position . 405))
+("friendly-cli"
+ (filename . "~/git/friendly-cli/")
+ (front-context-string . "app\n  -rw-------")
+ (rear-context-string . "30 Mar 31 18:49 ")
+ (position . 237))
+("\"Study Haskell\""
+ (filename . "~/study/haskell/")
+ (front-context-string . "non-zero\n  drwxr")
+ (rear-context-string . "88 Mar  9 15:25 ")
+ (position . 572))
+("\"WYFC\""
+ (filename . "~/brainstorming/WhatYourCoffee.org")
+ (front-context-string . "..\n  -rw-r--r-- ")
+ (rear-context-string . "28 Jan 22 15:58 ")
+ (position . 179)
+ (annotation . ""))
+("org-capture-last-stored"
+ (filename . "~/gtd/hair-studio-celine-media-upload.org")
+ (front-context-string . "**** TODO Woman'")
+ (rear-context-string . "25-09-29 Monday\n")
+ (position . 5671)
+ (last-modified 26842 29653 637152 80000))
+("org-refile-last-stored"
+ (filename . "~/gtd/gtd.org")
+ (front-context-string . "** TODO HCF Than")
+ (rear-context-string . "mployee.\n:END:\n\n")
+ (position . 8926)
+ (last-modified 26824 2409 511833 57000))
+("EnglishReading"
+ (filename . "~/EnglishReading/")
+ (front-context-string . "Principls for De")
+ (rear-context-string . "00 Nov 21 22:15 ")
+ (position . 234))
+("exercism-haskell"
+ (filename . "~/exercism/haskell/")
+ (front-context-string . "acronym\n  drwxr-")
+ (rear-context-string . "12 Sep 18 23:16 ")
+ (position . 234))
+("Drafts"
+ (filename . "~/git/jeongoon.github.io/drafts/")
+ (front-context-string . "2022-03-27-css-p")
+ (rear-context-string . "62 Sep 19 10:04 ")
+ (position . 254))
+)

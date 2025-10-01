@@ -1,0 +1,89 @@
+!-------------------------------------------------------------------------------
+! URxvt settings
+! Colours lifted from Solarized (http://ethanschoonover.com/solarized)
+! More info at:
+! http://pod.tst.eu/http://cvs.schmorp.de/rxvt-unicode/doc/rxvt.1.pod
+!-------------------------------------------------------------------------------
+
+! URxvt.urgentOnBell:         true
+! URxvt.visualBell:           true
+URxvt.geometry: 86x30
+URxvt.loginShell:           true
+URxvt.saveLines:            2000
+URxvt.internalBorder:       3
+URxvt.lineSpace:            0
+
+URxvt.secondaryScroll: true
+URxvt.hold: false
+
+! Fonts
+URxvt.allow_bold:           true
+
+URxvt.*font: xft:Fantasque Sans Mono:size=12, xft:KoPub Batang:antialias=false, xft:FuraCode NF, xft:Noto Color Emoji
+!URxvt.letterSpace: -1
+
+! Scrollbar
+URxvt.scrollStyle:          rxvt
+URxvt.scrollBar:            false
+
+! Perl extensions
+URxvt.perl-lib:             /home/myoungjin/.config/urxvt/ext
+URxvt.perl-ext-common:      default,clipboard,url-select,resize-font
+
+! Cursor
+URxvt.cursorBlink:          true
+!URxvt.cursorColor:          #657b83
+URxvt.cursorUnderline:      false
+
+! Pointer
+URxvt.pointerBlank:         true
+
+! url-select
+URxvt.url-select.launcher: /usr/bin/xdg-open
+URxvt.url-select.underline: true
+URxvt.keysym.M-u:           perl:url-select:select_next
+
+! clipboard
+URxvt.clipboard.autocopy: true
+!URxvt.keysym.M-S-w: perl:clipboard:copy
+!URxvt.keysym.S-C-v: perl:clipboard:paste
+
+! xkr-clipboard
+URxvt.iso14755:            false
+URxvt.iso14755_52:         true
+!URxvt.keysym.M-Insert:   perl:clipboard:copy
+!URxvt.keysym.M-
+
+! resize-font
+URxvt.keysym.C-Up:      resize-font:bigger
+URxvt.keysym.C-Down:    resize-font:smaller
+
+! Solarized Dark theme
+#include "solarized-dark.rc"
+
+URxvt.depth:              32
+URxvt.background:         [95]S_base03
+URxvt.fading:             10
+
+*foreground:              S_base0
+*fadeColor:               S_base03
+*cursorColor:             S_base1
+*pointerColorBackground:  S_base01
+*pointerColorForeground:  S_base1
+
+*color0:                  S_base02
+*color1:                  S_red
+*color2:                  S_green
+*color3:                  S_yellow
+*color4:                  S_blue
+*color5:                  S_magenta
+*color6:                  S_cyan
+*color7:                  S_base2
+*color9:                  S_orange
+*color8:                  S_base01
+*color10:                 S_blue
+*color11:                 S_base00
+*color12:                 S_base0
+*color13:                 S_violet
+*color14:                 S_base1
+*color15:                 S_base3

@@ -1,6 +1,15 @@
 #+TITLE: Emacs Configuration
-#+STARTUP: content nohideblocks align
+#+STARTUP: content nohideblocks noalign
 #+PROPERTY: header-args :comment yes
+
+* Server Detection
+#+BEGIN_SRC emacs-lisp
+  (defvar my/server-type
+    (or (bound-and-true-p my/loading-server-type) 'universal))
+  
+  (message "Using server type: %s" my/server-type)
+
+#+END_SRC
 
 * Repos
 #+BEGIN_SRC emacs-lisp
@@ -36,6 +45,12 @@
   (org-babel-do-load-languages
    'org-babel-load-languages
   '((shell . t)))
+
+  (defun myjin/display-graphic-p ()
+    "Alternative display-graphic-p for daemon modes"
+    (or (eq my/server-type 'gui-server)
+        (and (eq my/server-type 'universal)
+             (not (daemonp)))))
 
   (defun myjin/org-agenda ()
     "Update agenda file list first and go org-agenda"
@@ -168,6 +183,16 @@
              (lambda (xfpath)
                (let ((process-connection-type nil))
                  (start-process "" nil "xdg-open" xfpath))) xfileList))))))
+
+  (defun myjin/insert-left-quote ()
+    "Insert left curly quote"
+    (interactive)
+    (insert "‘"))
+
+  (defun myjin/insert-right-quote ()
+    "Insert right curly quote"
+    (interactive)
+    (insert "’"))
 #+END_SRC
 
 ***  TODO better argument handling with `:tag value' sequene
@@ -239,18 +264,18 @@
 
    (add-hook 'paredit-mode-hook
              (lambda () (diminish 'paredit-mode
-                             (if (display-graphic-p) " ⸨✓" " ⸨PE"))))
+                             (if (myjin/display-graphic-p) " ⸨✓" " ⸨PE"))))
 
    (add-hook 'all-the-icons-dired-mode-hook
              (lambda () (diminish 'all-the-icons-dired-mode
-                             (if (display-graphic-p) " 📁" " iDired"))))
+                             (if (myjin/display-graphic-p) " 📁" " iDired"))))
 
    ;; but this one works with `eval-after-load'
    ;; need to check how use-package deal with this.
    ;;  (eval-after-load 'highlight-indent-guides
    ;;    (lambda () (diminish 'highlight-indent-guides-mode (if (display-graphic-p ) " ⛙" "|{"))))
    ;;
-   (setq eldoc-minor-mode-string (if (display-graphic-p) " 📚" " Ed"))
+   (setq eldoc-minor-mode-string (if (myjin/display-graphic-p) " 📚" " Ed"))
 
  #+END_SRC
 *** TODO  make a type list for diminishing.
@@ -321,103 +346,73 @@
     =M-x all-the-icons-install-fonts= ???
 * Apperance / Window
 ** Frame Setup (frame, default font)
-   - General setup for my preference
-   - This frame setup is not for everyone
-     Because this will move the frame right-hand side and resize to narrow and long
-   - font: Fantasque Sans Mono | all-the-icons
-   - gruvbox-theme
-
-#+NAME: testing-hangul-alignment-in-table
-| hangul한글              | 01234오육칠팔구십   | Love사랑Freedom자유  |
-| if you cannot           | line is not aligned | you'd better look at |
-| face-font-rescale-alist | shown below         |                      |
-
-#+BEGIN_SRC emacs-lisp nohideblocks
+#+BEGIN_SRC emacs-lisp
     (defvar myjin/korean-font-family "KoPub Batang"
-      "Default Korean font for my setting") ;; or Noto Sans CJK KR"
+      "Default Korean font for my setting")
+
     (setq inhibit-startup-message t)
-    (if (display-graphic-p) ;; or (window-system)
-        ;; THEN
-        (progn
-          (set-scroll-bar-mode nil) ; I used to use 'left
-          (tool-bar-mode -1)
-          (add-to-list 'load-path (concat user-emacs-directory
-                                          (convert-standard-filename "our-lisp/")))
-          (use-package leuven-theme
-            :ensure t
-            :config
-            (load-theme 'leuven t))
-          ;; ^ you also need to check '(custom-set-variables section on your init.el
-          ;; where '(custom-enabled-themes '(...))
 
-          ;; FantasqueSansMono Nerd Font Mono has better metric matched with
-          ;; other unicode fonts than original "Fantasque Sans Mono" does.
-          (myjin/create-fontset "FantasqueSansMono Nerd Font Mono"
-                                "fantasque_kr" 15)
+    ;; GUI 프레임 설정 함수
+    (defun myjin/configure-gui-frame (frame)
+      "Configure GUI frame"
+      (when (display-graphic-p frame)
+        (with-selected-frame frame
+          ;; 툴바/스크롤바 제거
+          (when (fboundp 'scroll-bar-mode)
+            (scroll-bar-mode -1))
+          (when (fboundp 'tool-bar-mode)
+            (tool-bar-mode -1))
 
-          ;; https://github.com/domtronn/all-the-icons.el
-          ;; and I modifed a little to use dolist function
-          (dolist (fmname '("Symbola"
-                            "Noto Color Emoji"
-                            "FreeSerif"  ;; GNU Font; has a variety of unicodes
-                            "Segoe UI Emoji"
-                            ))
-            ;; note : not fantasque_kr but fontset-fantasque_kr
-            (set-fontset-font "fontset-fantasque_kr" 'unicode
-                              (font-spec :family fmname) nil 'append))
+          ;; 기본 폰트 설정
+          (when (member "FantasqueSansMono Nerd Font Mono" (font-family-list))
+            (set-frame-font "FantasqueSansMono Nerd Font Mono-11" nil t))
 
-          ;; use specific font for Korean charset.
-          ;; if you want to use different font size for specific charset,
-          ;; add :size POINT-SIZE in the font-spec.
+          ;; 한글 폰트 설정
+          (when (member myjin/korean-font-family (font-family-list))
+            (set-fontset-font t 'hangul (font-spec :family myjin/korean-font-family))
+            ;; 유니코드 범위로도 설정 (보험용)
+            ;;(set-fontset-font t '(#xac00 . #xd7af) myjin/korean-font-family)
+            )
 
-          (set-fontset-font "fontset-fantasque_kr" 'hangul
-                            (font-spec :name myjin/korean-font-family))
+          ;; 기타 유니코드 폰트들
+          (dolist (fmname '("Symbola" "Noto Color Emoji" "FreeSerif"))
+            (when (member fmname (font-family-list))
+              (set-fontset-font t 'unicode (font-spec :family fmname) nil 'append)))
 
-          ;; HACKING: Still testing on it.
-          ;; seems works for icon-dired-mode (file-icons; I guess there is something more
-          ;; hangul(한글) in table look at `testing-hangul-alignment-in-table'
-          (setq face-font-rescale-alist `(("Material Icons" . 0.8)
-                                          ;; `-> test:
-                                          ;; <Pictures>
-                                          ("FontAwesome" . 0.8)    ;; ???
-                                          ("github-octicons" . 0.8)
-                                          ;; `-> test:
-                                          ;; <any directory>  .vim something.txt~ README.md
-                                          ("all-the-icons" . 0.8)
-                                          ;; `-> test:
-                                          ;; .bashrc  .gitconfig  perl.pl shell.sh
-                                          ("file-icons" . 0.85) ;; these are wide
-                                          ;; javascript.js rakudo.pl6
-                                          (,myjin/korean-font-family . 1.15)))
-                                          ;; ^ matched with leuven-theme
-                                          ;; don't know why ascii font is smaller than usual
+          ;; 프레임 크기와 위치
+          (when (or (eq my/server-type 'gui-server)
+                    (and (eq my/server-type 'universal)
+                         (not (daemonp))))
+            (set-frame-parameter frame 'width 100)
+            (set-frame-parameter frame 'height 
+                                (if (< (display-pixel-height) 698) 30 70))
+            (set-frame-parameter frame 'left 1000)
+            (set-frame-parameter frame 'top 1)))))
 
-          ;; FIXME: find better way to find the width of window
-          (setq frame-default-left (- (x-display-pixel-width) 100)) ;; 700 when font size is 14
-          (if (< (x-display-pixel-height) 698)
-              (setq frame-default-height 30)
-              (setq frame-default-height 70))
-          (setq default-frame-alist
-                '((top . 1) (width . 100)
-                  ))
-          (add-to-list 'default-frame-alist (cons 'font "fontset-fantasque_kr"))
-          (add-to-list 'default-frame-alist (cons 'left 1000))
-          (add-to-list 'default-frame-alist (cons 'height frame-default-height))
-          (setq window-system-default-frame-alist default-frame-alist)
-          )
-      ;; ELSE
-      ;;; Apply Some theme if on terminal - if your terminal color scheme is
-      ;;; not good for editing under terminal
-          (use-package leuven-theme
-            :ensure t
-            :config
-            (load-theme 'leuven t))
-
-  ;;    (use-package gruvbox-theme
-  ;;    :ensure t
-  ;;    :config (load-theme 'gruvbox t))
-          )
+    ;; face-font-rescale-alist 설정
+    (setq face-font-rescale-alist 
+          `(("Material Icons" . 0.8)
+            ("FontAwesome" . 0.8)
+            ("github-octicons" . 0.8)
+            ("all-the-icons" . 0.8)
+            ("file-icons" . 0.85)
+            (,myjin/korean-font-family . 1.15)))
+    ;; 테마 로딩
+    (use-package leuven-theme
+      :ensure t
+      :config
+      (load-theme 'leuven t))
+    ;; 라이브러리 경로
+    (add-to-list 'load-path (concat user-emacs-directory
+                                    (convert-standard-filename "our-lisp/")))
+    ;; 데몬 모드에서 프레임 설정
+    (if (daemonp)
+        (add-hook 'after-make-frame-functions #'myjin/configure-gui-frame)
+      ;; 일반 모드에서 설정
+      (when (display-graphic-p)
+        (myjin/configure-gui-frame (selected-frame))))
 #+END_SRC
+
 *** ✖ find the better way to move window right hand side (better calcuation based on window size)
 CLOSED: [2022-02-17 Thu 22:16]
 *** ☕ still Atom appears bigger among the files in all-the-icons-dired mode
@@ -484,7 +479,7 @@ CLOSED: [2022-02-17 Thu 22:16]
           (setq setting-modeline? nil))
 
          ((eq curr-ml 'spaceline+eyeliner)
-          (unless (display-graphic-p)
+          (unless (myjin/display-graphic-p)
             (message "your preffered modelines 'spaceline is not working on terminal: going back to: %s" fallback-ml)
             (setq curr-ml fallback-ml)
             (throw 'modeline-switch fallback-ml))
@@ -708,6 +703,8 @@ certain major modes defined in `display-line-numbers-exempt-modes'"
   | t         | s                | buff         | *scratch*                                 | nil        | it looks bold when type **scratch** |
   | t         | e                | file         | ~/study/english/study-english.org       | nil        |                                   |
   | t         | w                | file         | ~/gtd/writing.org                       | nil        |                                   |
+  | t         | `                | func         | myjin/insert-left-quote                 | nil        | left curly quote                  |
+  | t         | '                | func         | myjin/insert-right-quote                | nil        | right curl quote                  |
   |-----------+------------------+--------------+-----------------------------------------+------------+-----------------------------------|
   | t         | p                | toggle       | paredit-mode                            |            | toggle mode                       |
   | g         | C-c d            | func         | paredit-forward-down                    |            |                                   |
@@ -913,7 +910,7 @@ certain major modes defined in `display-line-numbers-exempt-modes'"
 
 ** Prettify-Symbols-mode
 #+BEGIN_SRC emacs-lisp
-  (if (display-graphic-p)
+  (if (myjin/display-graphic-p)
       (progn
         (add-hook
          'raku-mode-hook
@@ -1263,11 +1260,11 @@ CLOSED: [2024-01-29 Mon 18:23]
 
   (defvar myjin/org-bullets-bullet-list)
   (defvar myjin/org-ellipsis " »")
-  (setq myjin/org-bullets-bullet-list (cons (if (display-graphic-p) "⚝" "❃")
+  (setq myjin/org-bullets-bullet-list (cons (if (myjin/display-graphic-p) "⚝" "❃")
                                                 myjin/org-bullets-bullet-list-common))
 
   (setq org-bullets-bullet-list myjin/org-bullets-bullet-list)
-  (setq org-ellipsis (if (display-graphic-p) "⮯"  " »"))
+  (setq org-ellipsis (if (myjin/display-graphic-p) "⮯"  " »"))
 
   (font-lock-add-keywords 'org-mode
                           '(("^ +\\([-*]\\) "
@@ -1470,7 +1467,7 @@ CLOSED: [2024-01-29 Mon 18:23]
 * Misc / Testing
 ** Beacon
 #+BEGIN_SRC emacs-lisp
-    (unless (display-graphic-p) ;; it is buggy with my X-window setup
+    (unless (myjin/display-graphic-p) ;; it is buggy with my X-window setup
         (use-package beacon :ensure t
           :config
           (progn
@@ -1503,7 +1500,7 @@ CLOSED: [2024-01-29 Mon 18:23]
       (setq nov-text-width t)
       (setq visual-fill-column-center-text t)
       (add-hook 'nov-mode-hook (lambda () (visual-line-mode)))
-      (if (display-graphic-p)
+      (if (myjin/display-graphic-p)
           (add-hook 'nov-mode-hook 'my-nov-font-setup))
       (add-to-list 'auto-mode-alist '("\\.epub\$" . nov-mode))))
 #+END_SRC
@@ -1549,6 +1546,45 @@ CLOSED: [2024-01-29 Mon 18:23]
                               (- current-available visual-wrap-column))))))
 #+END_SRC
 
+
+* Hair Studio Image Upload
+#+BEGIN_SRC emacs-lisp
+  ;;(unless (boundp 'business-photo-auto-convert)
+  ;;  (setq business-photo-auto-convert nil))
+    (use-package business-photo-upload
+      ;;:load-path "~/.emacs.d/my-lisp/"
+      :init
+      ;;(setq business-photo-auto-convert nil)
+      :custom
+      ;; === 파일 위치 설정 ===
+      (business-photo-org-directory "~/gtd/")     ; org 디렉토리
+      (business-photo-log-filename "hair-studio-celine-media-upload.org")       ; 파일명
+      ;; === Capture 설정 ===
+      (business-photo-capture-key "B")                    ; Capture 키 (B가 충돌시)
+      (business-photo-auto-convert t)                     ; 자동 변환 여부
+      ;; === 이미지 변환 설정 ===
+      ;;(business-photo-apple-max-size 3000)               ; Apple 최대 크기 (픽셀)
+      (business-photo-apple-quality 100)                  ; Apple JPEG 품질 (1-100)
+      (business-photo-google-quality 100)                 ; Google JPEG 품질 (1-100)
+      (business-photo-show-images nil)        ; 자동 이미지 표시
+      (business-photo-image-width 250)      ; 표시 크기 (픽)셀
+      (business-photo-search-directories
+       '("~/Pictures/iCloud/"))
+      ;;:bind
+      ;; 전역 키바인딩
+      ;;(("C-c p u" . my/business-mark-uploaded)           ; 업로드 체크
+      ;;("C-c p d" . my/business-convert-directory))      ; 디렉토리 변환
+      ;;:hook
+      ;; org-mode에서만 활성화되는 키바인딩
+      ;;(org-mode . (lambda ()
+      ;; (local-set-key (kbd "C-c b m") 'my/business-mark-uploaded)
+      ;;(local-set-key (kbd "C-c b d") 'my/business-convert-directory)))
+      :config
+      ;; 패키지 로드 후 실행
+      (message "Business photo upload loaded with directory: %s" 
+               business-photo-org-directory))
+#+END_SRC
+
 * Experiment
   - hide some minor mode
   [[https://emacs.stackexchange.com/questions/3925/hide-list-of-minor-modes-in-mode-line/3928#comment5928_3928]]
@@ -1575,5 +1611,233 @@ CLOSED: [2024-01-29 Mon 18:23]
 
 #+END_SRC
 
+* Spell check
 
-* Changelog
+#+begin_src emacs-lisp
+  (use-package ispell
+    :custom
+    (ispell-program-name "hunspell")
+    (ispell-dictionary "ko_KR")
+    (ispell-local-dictionary-alist
+     '(("ko_KR" "[가-힣]" "[^가-힣]" "[']" nil ("-d" "ko_KR") nil utf-8))))
+
+  ;; flyspell 설정
+  (use-package flyspell
+    :hook
+    (text-mode . flyspell-mode)
+    (prog-mode . flyspell-prog-mode)
+    :bind
+    (:map flyspell-mode-map
+          ;; 기본 키바인딩이 다른 메이저 모드와 충돌할 수 있어서 제거
+          ("C-;" . nil)
+          ("C-." . nil)
+          ("C-," . nil))
+    :custom
+    (flyspell-issue-message-flag nil)  ; 성능 향상을 위해 메시지 출력 비활성화
+    (flyspell-issue-welcome-flag nil))
+#+end_src
+
+#+begin_src elisp
+  ;; 팝업 인터페이스 개선을 위한 popup 패키지 설정
+  (use-package popup
+    :ensure t)
+
+  ;; flyspell-popup 설정 (마우스 우클릭 대신 팝업 인터페이스 사용)
+  (use-package flyspell-popup
+    :ensure t
+    :after flyspell
+    :bind (:map flyspell-mode-map
+           ("C-;" . flyspell-popup-correct))
+    :hook
+    (flyspell-mode . flyspell-popup-auto-correct-mode))
+#+end_src
+
+* Timer
+ - <2025-09-03 Wed> added
+#+begin_src emacs-lisp
+(defun myjin/org-timer-notification (title message)
+  "Send system notification on Linux"
+  (start-process "notify-send" nil
+                 "notify-send"
+                 "-t" "5000"  ; 5초간 표시
+                 title message))
+
+(add-hook 'org-timer-done-hook
+          (lambda ()
+            (myjin/org-timer-notification
+             "Org Timer"
+             "Timer completed!")))
+#+end_src
+
+* Bill payment helper
+ - <2025-09-03 Wed> added
+
+#+begin_src emacs-lisp
+  ;; deadline 이전의 수요일을 찾는 함수
+  (defun myjin/wednesday-before-deadline (date-string)
+    "Given a deadline date string, return the last Wednesday before or on that date."
+    (let* ((parsed-date (org-parse-time-string date-string))
+           (year (nth 5 parsed-date))
+           (month (nth 4 parsed-date))
+           (day (nth 3 parsed-date))
+           ;; encode-time을 사용해서 주어진 날짜를 time으로 변환
+           (deadline-time (encode-time 0 0 0 day month year))
+           (deadline-decoded (decode-time deadline-time))
+           (day-of-week (nth 6 deadline-decoded)) ; 0=일요일, 1=월요일, ..., 3=수요일
+           ;; 수요일까지 뒤로 가야 할 일수 계산
+           (days-back (if (<= day-of-week 3)
+                          ;; 일~수요일인 경우: 이전 주 수요일로
+                          (+ (- day-of-week 3) 7)
+                          ;; 목~토요일인 경우: 이번 주 수요일로
+                          (- day-of-week 3)))
+           ;; 날짜 계산 (월 경계 자동 처리)
+           (wednesday-time (time-subtract deadline-time (days-to-time days-back))))
+      (format-time-string "%Y-%m-%d %a" wednesday-time)))
+
+  ;; 홈 전기세 템플릿 생성 함수 (schedule 포함)
+  (defun myjin/home-electricity-template ()
+    "Generate home electricity bill template with schedule."
+    (let* ((due-date (read-string "Due Date (YYYY-MM-DD): "))
+           (amount (read-string "Amount: "))
+           (recurrence (read-string "Recurrence (e.g., ++1m, ++3m, or empty): "))
+           (payment-date (myjin/wednesday-before-deadline due-date))
+           (schedule-string (if (string-empty-p recurrence)
+                               payment-date
+                             (format "%s %s" payment-date recurrence))))
+      (format " - %s by %s\n   SCHEDULED: <%s>" amount due-date schedule-string)))
+
+  ;; 홈 가스비 템플릿 생성 함수 (schedule 포함)
+  (defun myjin/home-gas-template ()
+    "Generate home gas bill template with schedule."
+    (let* ((due-date (read-string "Due Date (YYYY-MM-DD): "))
+           (amount (read-string "Amount: "))
+           (recurrence (read-string "Recurrence (e.g., ++1m, ++3m, or empty): "))
+           (payment-date (myjin/wednesday-before-deadline due-date))
+           (schedule-string (if (string-empty-p recurrence)
+                               payment-date
+                             (format "%s %s" payment-date recurrence))))
+      (format " - %s by %s\n   SCHEDULED: <%s>" amount due-date schedule-string)))
+
+  ;; 비즈니스 전기세 템플릿 생성 함수 (schedule 포함)
+  (defun myjin/business-electricity-template ()
+    "Generate business electricity bill template with schedule."
+    (let* ((due-date (read-string "Due Date (YYYY-MM-DD): "))
+           (amount (read-string "Amount: "))
+           (recurrence (read-string "Recurrence (e.g., ++1m, ++3m, or empty): "))
+           (payment-date (myjin/wednesday-before-deadline due-date))
+           (schedule-string (if (string-empty-p recurrence)
+                               payment-date
+                             (format "%s %s" payment-date recurrence))))
+      (format " - %s by %s\n   SCHEDULED: <%s>" amount due-date schedule-string)))
+
+  ;; L'oreal 템플릿 생성 함수 (6개월 반복)
+  (defun myjin/loreal-template ()
+    "Generate L'oreal payment template with 6-month recurring schedule."
+    (let* ((due-date (read-string "Due Date (YYYY-MM-DD): "))
+           (amount (read-string "Amount: "))
+           (description (read-string "Description (optional): "))
+           (payment-date (myjin/wednesday-before-deadline due-date))
+           (schedule-string (format "%s ++6m" payment-date))
+           (desc-text (if (string-empty-p description) "" (format " - %s" description))))
+      (format " - %s by %s%s\n   SCHEDULED: <%s>" amount due-date desc-text schedule-string)))
+
+  ;; 새로운 청구서 항목 생성 함수 (필요시)
+  (defun myjin/bill-template-generator ()
+    "Generate a bill template with calculated Wednesday payment date and schedule."
+    (let* ((bill-name (read-string "Bill Name: "))
+           (due-date (read-string "Due Date (YYYY-MM-DD): "))
+           (account (read-string "Account: "))
+           (amount (read-string "Amount: "))
+           (recurrence (read-string "Recurrence (e.g., ++1m, ++3m, or empty): "))
+           (payment-date (myjin/wednesday-before-deadline due-date))
+           (schedule-string (if (string-empty-p recurrence)
+                               payment-date
+                             (format "%s %s" payment-date recurrence))))
+      (format "*** TODO %s\nSCHEDULED: <%s>\n:PROPERTIES:\n:ACCOUNT: %s\n:END:\n - %s by %s"
+              bill-name schedule-string account amount due-date)))
+
+  ;; 새로운 L'oreal TODO 항목 생성 함수
+  (defun myjin/loreal-todo-template ()
+    "Generate new L'oreal TODO entry with 6-month recurring schedule."
+    (let* ((due-date (read-string "Due Date (YYYY-MM-DD): "))
+           (amount (read-string "Amount: "))
+           (description (read-string "Description: "))
+           (payment-date (myjin/wednesday-before-deadline due-date))
+           (schedule-string (format "%s ++6m" payment-date)))
+      (format "*** TODO Pay L'oreal - %s\nSCHEDULED: <%s>\n:PROPERTIES:\n:ACCOUNT: %s\n:END:\n - %s by %s"
+              description schedule-string 
+              (read-string "Account: ") amount due-date)))
+
+  ;; Bill 관련 capture 템플릿들을 기존 템플릿에 추가하는 함수
+  (defun myjin/add-bill-capture-templates ()
+    "Add bill-related capture templates to existing org-capture-templates"
+    (let ((bill-templates
+           '(("b" "Bills")
+             ("bh" "Home Bills")          ; bhe, bhg, bhn을 위한 그룹 헤더
+             ("bhe" "Home Electricity Bill" item
+              (file+olp "~/gtd/gtd.org" "TODO Payment and Bills" "TODO Bills" "TODO Pay Electricty for Home")
+              (function myjin/home-electricity-template)
+              :immediate-finish t)
+             
+             ("bhg" "Home Gas Bill" item
+              (file+olp "~/gtd/gtd.org" "TODO Payment and Bills" "TODO Bills" "TODO Pay Gas for Home")
+              (function myjin/home-gas-template)
+              :immediate-finish t)
+              
+             ("bhn" "New Home Bill" entry
+              (file+olp "~/gtd/gtd.org" "TODO Payment and Bills" "TODO Bills")
+              "*** TODO %^{Bill Name} :HOME:\nSCHEDULED: <%^{Due Date}>\n:PROPERTIES:\n:ACCOUNT: COM: 72688117\n:END:\n - %^{Amount} by %^{Due Date}")
+              
+             ("bb" "Business Bills")       ; bbe, bbn을 위한 그룹 헤더
+             ("bbe" "Business Electricity Bill" item
+              (file+olp "~/gtd/gtd.org" "TODO Payment and Bills" "TODO Bills" "TODO Pay Electricty for Shop")
+              (function myjin/business-electricity-template)
+              :immediate-finish t)
+              
+             ("bbn" "New Business Bill" entry
+              (file+olp "~/gtd/gtd.org" "TODO Payment and Bills" "TODO Bills")
+              "*** TODO %^{Bill Name} :SHOP:\nSCHEDULED: <%^{Due Date}>\n:PROPERTIES:\n:ACCOUNT: Westpac\n:END:\n - %^{Amount} by %^{Due Date}")
+              
+             ;; L'oreal 관련
+             ("bl" "L'oreal")              ; bl, bln을 위한 그룹 헤더  
+             ("bl " "L'oreal Payment" item  ; 공백 추가로 구분
+              (file+olp "~/gtd/gtd.org" "TODO Payment and Bills" "TODO Bills" "TODO Pay L'oreal")
+              (function myjin/loreal-template)
+              :immediate-finish t)
+              
+             ("bln" "New L'oreal TODO" entry
+              (file+olp "~/gtd/gtd.org" "TODO Payment and Bills" "TODO Bills")
+              (function myjin/loreal-todo-template)
+              :immediate-finish t)
+              
+             ;; 새로운 청구서 항목 생성
+             ("bn" "New Bills")            ; bnw를 위한 그룹 헤더
+             ("bnw" "New Bill with Schedule" entry
+              (file+olp "~/gtd/gtd.org" "TODO Payment and Bills" "TODO Bills")
+              (function myjin/bill-template-generator)
+              :immediate-finish t))))
+      
+      ;; 기존 org-capture-templates가 없으면 초기화
+      (unless (boundp 'org-capture-templates)
+        (setq org-capture-templates '()))
+      
+      ;; 기존 템플릿에 추가
+      (setq org-capture-templates
+            (append org-capture-templates bill-templates))))
+
+  ;; org-capture 로드 후 템플릿 추가
+  (with-eval-after-load 'org-capture
+    (myjin/add-bill-capture-templates))
+           
+  ;; Capture 단축키 설정 (선택사항)
+  ;;(global-set-key (kbd "C-c c") 'org-capture)
+
+  ;; 더 빠른 접근을 위한 개별 단축키 설정 (선택사항)
+  ;;(global-set-key (kbd "C-c b h e") (lambda () (interactive) (org-capture nil "bhe")))
+  ;;(global-set-key (kbd "C-c b h g") (lambda () (interactive) (org-capture nil "bhg")))
+  ;;(global-set-key (kbd "C-c b b e") (lambda () (interactive) (org-capture nil "bbe")))
+#+end_src
+
+#+RESULTS:
+: myjin/wednesday-before-deadline
+
