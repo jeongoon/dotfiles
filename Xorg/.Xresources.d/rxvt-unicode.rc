@@ -19,7 +19,7 @@ URxvt.hold: false
 ! Fonts
 URxvt.allow_bold:           true
 
-URxvt.*font: xft:Fantasque Sans Mono:size=12, xft:KoPub Batang:antialias=false, xft:FuraCode NF, xft:Noto Color Emoji
+URxvt.*font: xft:Fantasque Sans Mono:pixelsize=16, xft:KoPub Batang:antialias=false, xft:FuraCode NF, xft:Noto Color Emoji
 !URxvt.letterSpace: -1
 
 ! Scrollbar
@@ -28,7 +28,7 @@ URxvt.scrollBar:            false
 
 ! Perl extensions
 URxvt.perl-lib:             /home/myoungjin/.config/urxvt/ext
-URxvt.perl-ext-common:      default,clipboard,url-select,resize-font
+URxvt.perl-ext-common:      default,clipboard,url-select,repixelsize-font
 
 ! Cursor
 URxvt.cursorBlink:          true

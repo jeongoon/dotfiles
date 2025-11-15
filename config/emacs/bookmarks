@@ -2,7 +2,13 @@
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-(("business-photo-upload.el"
+(("HCF Thank you eGift"
+ (filename . "~/gtd/tickler.org")
+ (front-context-string . "** TODO HCF Than")
+ (rear-context-string . " special check\n\n")
+ (position . 2894)
+ (last-modified 26881 36105 970315 381000))
+("business-photo-upload.el"
  (filename . "~/.emacs.d/my-lisp/business-photo-upload.el")
  (front-context-string)
  (rear-context-string . "ad.el ends here\n")
@@ -52,11 +58,11 @@
  (position . 179)
  (annotation . ""))
 ("org-capture-last-stored"
- (filename . "~/gtd/hair-studio-celine-media-upload.org")
- (front-context-string . "**** TODO Woman'")
- (rear-context-string . "25-09-29 Monday\n")
- (position . 5671)
- (last-modified 26842 29653 637152 80000))
+ (filename . "~/brainstorming/org-roam/20251113165655-sortablelist.org")
+ (front-context-string . "\n가만히 보니까 어떤 데이터 ")
+ (rear-context-string . "e: SortableList\n")
+ (position . 90)
+ (last-modified 26901 29681 669404 505000))
 ("org-refile-last-stored"
  (filename . "~/gtd/gtd.org")
  (front-context-string . "** TODO HCF Than")

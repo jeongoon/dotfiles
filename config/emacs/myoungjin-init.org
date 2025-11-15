@@ -596,7 +596,10 @@ certain major modes defined in `display-line-numbers-exempt-modes'"
   (use-package go-mode :ensure t)
   (use-package elm-mode :ensure t :defer t)
   ;;(use-package hamlet-mode :ensure t :defer t)
-  (use-package shakespeare-mode :ensure t :defer t)
+  (use-package shakespeare-mode
+    :ensure t :defer t
+    :config
+    (add-hook 'shakespeare-mode-book 'rainbow-mode))
 
   ;; (use-package mmm-mode
   ;;   :config
@@ -627,7 +630,18 @@ certain major modes defined in `display-line-numbers-exempt-modes'"
   (defun myjin/cider-repl-prompt (namespace)
     "Return a prompt string that mentions NAMESPACE."
     (format "%s🍀 " (cider-abbreviate-ns namespace)))
+  ;; CSS 16 NOV 2025
+  (use-package rainbow-mode
+    :ensure t
+    :hook ((css-mode . rainbow-mode)
+           (scss-mode . rainbow-mode)
+           (html-mode . rainbow-mode))
+    :config
+    (setq rainbow-x-colors nil))  ; X11 컬러 이름 비활성화 (선택사항)
 #+END_SRC
+
+#+RESULTS:
+| rainbow-mode |
 
 ** Flycheck
 #+BEGIN_SRC emacs-lisp
@@ -638,48 +652,102 @@ certain major modes defined in `display-line-numbers-exempt-modes'"
 
 ;;(use-package flycheck-perl6 :ensure t)
 #+END_SRC
-** Auto-complete
+** [DISALED] Auto-complete
 #+BEGIN_SRC emacs-lisp
 ;; https://cestlaz.github.io/posts/using-emacs-8-autocomplete/
-(use-package auto-complete
-  :ensure t
-  :init
-  (progn
-    (ac-config-default)
-    (global-auto-complete-mode t) ))
+;;(use-package auto-complete
+;;  :ensure t
+;;  :init
+;;  (progn
+;;    (ac-config-default)
+;;    (global-auto-complete-mode t) ))
 
-(add-to-list 'ac-modes 'raku-mode)
+;;(add-to-list 'ac-modes 'raku-mode)
+
+
 #+END_SRC
-** Swiper / Counsel
+** [DISABLED] Swiper / Counsel
    - [[https://cestlaz.github.io/posts/using-emacs-6-swiper/]]
 #+BEGIN_SRC emacs-lisp
-(use-package counsel :ensure t )
+;;(use-package counsel :ensure t )
 
-(use-package swiper
-  :ensure try
-  :config
-  (progn
-    (ivy-mode 1)
-    (setq ivy-use-virtual-buffers t)
-    (setq ivy-height 7)
-    (setq ivy-fixed-height-minibuffer nil)
-    (global-set-key "\C-s" 'swiper)
-    (global-set-key (kbd "C-c C-r") 'ivy-resume)
-    (global-set-key (kbd "<f6>") 'ivy-resume)
-    (global-set-key (kbd "M-x") 'counsel-M-x)
-    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
-    (global-set-key (kbd "<f1> f") 'counsel-describe-function)
-    (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
-    (global-set-key (kbd "<f1> l") 'counsel-load-library)
-    (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
-    (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
-    (global-set-key (kbd "C-c g") 'counsel-git)
-    (global-set-key (kbd "C-c j") 'counsel-git-grep)
-    (global-set-key (kbd "C-c k") 'counsel-ag)
-    (global-set-key (kbd "C-x l") 'counsel-locate)
-    (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
-    (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
-    ))
+;;(use-package swiper
+;;  :ensure try
+;;  :config
+;;  (progn
+;;    (ivy-mode 1)
+;;    (setq ivy-use-virtual-buffers t)
+;;    (setq ivy-height 7)
+;;    (setq ivy-fixed-height-minibuffer nil)
+;;    (global-set-key "\C-s" 'swiper)
+;;    (global-set-key (kbd "C-c C-r") 'ivy-resume)
+;;    (global-set-key (kbd "<f6>") 'ivy-resume)
+;;    (global-set-key (kbd "M-x") 'counsel-M-x)
+;;    (global-set-key (kbd "C-x C-f") 'counsel-find-file)
+;;    (global-set-key (kbd "<f1> f") 'counsel-describe-function)
+;;    (global-set-key (kbd "<f1> v") 'counsel-describe-variable)
+;;    (global-set-key (kbd "<f1> l") 'counsel-load-library)
+;;    (global-set-key (kbd "<f2> i") 'counsel-info-lookup-symbol)
+;;    (global-set-key (kbd "<f2> u") 'counsel-unicode-char)
+;;    (global-set-key (kbd "C-c g") 'counsel-git)
+;;    (global-set-key (kbd "C-c j") 'counsel-git-grep)
+;;    (global-set-key (kbd "C-c k") 'counsel-ag)
+;;    (global-set-key (kbd "C-x l") 'counsel-locate)
+;;    (global-set-key (kbd "C-S-o") 'counsel-rhythmbox)
+;;    (define-key read-expression-map (kbd "C-r") 'counsel-expression-history)
+;;    ))
+#+END_SRC
+
+* Vertico + Consult + Orderless
+#+BEGIN_SRC emacs-lisp
+  ;; 1. 미니버퍼 완성 프레임워크
+  (use-package vertico
+    :ensure t
+    :init
+    (vertico-mode))
+
+  ;; 2. 검색/탐색 강화
+  (use-package consult
+    :ensure t
+    :bind (;; 기존 counsel 대체
+           ("C-s" . consult-line)          ; swiper 대체
+           ("C-x b" . consult-buffer)      ; counsel-switch-buffer 대체
+           ("C-x C-f" . find-file)         ; 그대로
+           ("M-x" . execute-extended-command) ; 또는 counsel-M-x 유지
+           ("C-c g" . consult-git-grep)
+           ("C-c r" . consult-ripgrep)))
+  ;; note: installment of ripgrep on the system required
+  ;; ex) pacman -S ripgrep
+  ;; 3. 정렬/필터링 개선
+  (use-package orderless
+    :ensure t
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-overrides '((file (styles basic partial-completion)))))
+
+  ;; 4. 자동완성 (auto-complete 대체)
+  (use-package company
+    :ensure t
+    :init
+    (global-company-mode)
+    :config
+    (setq company-idle-delay 0.2
+          company-minimum-prefix-length 2))
+
+  ;; 5. org-roam 통합
+  (use-package consult-org-roam
+    :ensure t
+    :after org-roam consult
+    :config
+    (consult-org-roam-mode 1)
+    :custom
+    (consult-org-roam-grep-func #'consult-ripgrep)
+    :bind
+    (("C-c n f" . consult-org-roam-file-find)      ; 파일 찾기
+     ("C-c n b" . consult-org-roam-backlinks)      ; 백링크 보기
+     ("C-c n B" . consult-org-roam-backlinks-recursive) ; 재귀 백링크
+     ("C-c n s" . consult-org-roam-search)         ; 내용 검색
+     ("C-c n t" . consult-org-roam-forward-links))) ; 포워드 링크
 #+END_SRC
 
 * Keyboard / Cursor / Shortcuts
@@ -814,7 +882,7 @@ certain major modes defined in `display-line-numbers-exempt-modes'"
   (progn
     ; I use emacs in termial many times but `C-:' doesn't seem to work
     (global-set-key (kbd "M-:") 'avy-goto-char-timer)
-    (setq avy-timeout-seconds 0.35)
+   (setq avy-timeout-seconds 0.35)
     ; "You can actually replace the M-g g binding of goto-line,
     ; since if you enter a digit for avy-goto-line, it will switch to
     ; goto-line with that digit already entered."
@@ -1800,7 +1868,7 @@ CLOSED: [2024-01-29 Mon 18:23]
               
              ;; L'oreal 관련
              ("bl" "L'oreal")              ; bl, bln을 위한 그룹 헤더  
-             ("bl " "L'oreal Payment" item  ; 공백 추가로 구분
+             ("blp" "L'oreal Payment" item  ; 공백 추가로 구분
               (file+olp "~/gtd/gtd.org" "TODO Payment and Bills" "TODO Bills" "TODO Pay L'oreal")
               (function myjin/loreal-template)
               :immediate-finish t)
@@ -1838,6 +1906,4 @@ CLOSED: [2024-01-29 Mon 18:23]
   ;;(global-set-key (kbd "C-c b b e") (lambda () (interactive) (org-capture nil "bbe")))
 #+end_src
 
-#+RESULTS:
-: myjin/wednesday-before-deadline
 

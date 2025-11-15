@@ -93,7 +93,7 @@
    '("--ghci-options=-ferror-spans -dynamic" "--no-build" "--no-load"))
  '(iswitchb-mode 'on)
  '(org-agenda-files
-   '("~/dotfiles/config/emacs/myoungjin-init.org"
+   '("/home/myoungjin/.emacs.d/myoungjin-init.org"
      "/home/myoungjin/gtd/inbox.org" "/home/myoungjin/gtd/gtd.org"
      "/home/myoungjin/gtd/tickler.org"
      "/home/myoungjin/brainstorming/Future.org"
@@ -168,7 +168,16 @@
      "/home/myoungjin/brainstorming/org-roam/20250730151716-metacognition.org"
      "/home/myoungjin/brainstorming/org-roam/20250730170211-hcf_health_insurance.org"
      "/home/myoungjin/brainstorming/org-roam/20250805233023-dropbox.org"
-     "/home/myoungjin/brainstorming/org-roam/20250813201457-linux_지문_등록_도우미_fish_shell.org"))
+     "/home/myoungjin/brainstorming/org-roam/20250813201457-linux_지문_등록_도우미_fish_shell.org"
+     "/home/myoungjin/brainstorming/org-roam/20250827204331-makepkg.org"
+     "/home/myoungjin/brainstorming/org-roam/20251001104914-gpg_agent.org"
+     "/home/myoungjin/brainstorming/org-roam/20251002223758-gpg.org"
+     "/home/myoungjin/brainstorming/org-roam/20251008143322-ing_bank.org"
+     "/home/myoungjin/brainstorming/org-roam/20251029120038-myer_one.org"
+     "/home/myoungjin/brainstorming/org-roam/20251112162245-jeongoon_space.org"
+     "/home/myoungjin/brainstorming/org-roam/20251112212737-gift_card_balance_tracker.org"
+     "/home/myoungjin/brainstorming/org-roam/20251113104342-dkim.org"
+     "/home/myoungjin/brainstorming/org-roam/20251113165655-sortablelist.org"))
  '(org-capture-templates
    '(("t" "Todo [inbox]" entry (file+headline "~/gtd/inbox.org" "Tasks")
       (file "~/gtd/tpl-todo.txt"))
@@ -219,9 +228,9 @@
  '(spaceline-all-the-icons-slim-render t)
  '(spaceline-all-the-icons-window-number-always-visible t)
  '(spaceline-show-default-input-method t)
- '(work-mode-modeline-preference (if (eq my/loading-server-type 'gui-server)
-                                     'spaceline+all-the-icons
-                                   'powerline))
+ '(work-mode-modeline-preference
+   (if (eq my/loading-server-type 'gui-server) 'spaceline+all-the-icons
+     'powerline))
  '(work-mode-modeline-preference1 'powerline+airline))
 
  ; useful when you're using symlinked configuration file
