@@ -505,19 +505,15 @@ CLOSED: [2022-02-17 Thu 22:16]
   (setq resize-mini-windows nil) ;; set `nil' to keep size after resizing minibuffer
                                  ;; and do something else
   (defun resize-minibuffer-window (&optional greeting-message)
-    (interactive) ; needed because we will use inside global-set-key as well
+    (interactive)
     (let* ((minibuffer-orig-height (window-size (minibuffer-window)))
            (minibuffer-new-height 7)
-           (delta (- minibuffer-new-height minibuffer-orig-height))
-           )
-      (if (= 0 delta)
-          nil
-          (progn
-            (window-resize (minibuffer-window) delta)
-            (when greeting-message (message "Have a nice one. ;^]"))
-            )
-          )))
-
+           (delta (- minibuffer-new-height minibuffer-orig-height)))
+      (unless (= 0 delta)
+        (window-resize (minibuffer-window) delta)
+        ;; 메시지는 수동으로 호출했을 때만 표시
+        (when (and greeting-message (called-interactively-p 'interactive))
+          (message "Have a nice one. ;^]")))))
     ;; resize minibuffer on terminal and window-system when initializing
   (add-hook 'window-state-change-hook (lambda ()
                                         (resize-minibuffer-window t)))
@@ -527,6 +523,10 @@ CLOSED: [2022-02-17 Thu 22:16]
                                 (redraw-display)
                                 (resize-minibuffer-window)))
 #+END_SRC
+
+#+RESULTS:
+: #[nil ((redraw-display) (resize-minibuffer-window)) nil nil nil nil]
+
 ** Ace-window (window management)
 #+BEGIN_SRC emacs-lisp
   ;; copyright: https://github.com/zamansky/using-emacs/blob/master/myinit.org
@@ -699,56 +699,136 @@ certain major modes defined in `display-line-numbers-exempt-modes'"
 #+END_SRC
 
 * Vertico + Consult + Orderless
+*** DONE Implement double C-s behavior for repeating previous search
+CLOSED: [2025-11-16 Sun]
+:LOGBOOK:
+- State "DONE"       from              [2025-11-16 Sun] \\
+  Implemented consult-line DWIM (Do What I Mean) functionality that mimics 
+  swiper's behavior. When C-s is pressed twice within 0.5 seconds, it 
+  automatically reuses the previous search term instead of starting a new 
+  empty search. This improves workflow efficiency by reducing repetitive typing.
+  
+  Key implementation details:
+  - Uses `consult--line-history` to retrieve the last search term
+  - Tracks the time between consecutive C-s presses
+  - Automatically inserts previous search when called rapidly
+  - Works both in minibuffer and regular buffers
+:END:
+
+The implementation allows for quick re-search without needing to retype 
+search terms, which is particularly useful when searching for the same 
+pattern multiple times across different locations in a file.
+** History / Change Log
+*** DONE Implement double C-s behavior for repeating previous search
+
+
+** Configuration
 #+BEGIN_SRC emacs-lisp
-  ;; 1. 미니버퍼 완성 프레임워크
-  (use-package vertico
-    :ensure t
-    :init
-    (vertico-mode))
+      ;; 1. Minibuffer completion framework
+      (use-package vertico
+        :ensure t
+        :init
+        (vertico-mode))
 
-  ;; 2. 검색/탐색 강화
-  (use-package consult
-    :ensure t
-    :bind (;; 기존 counsel 대체
-           ("C-s" . consult-line)          ; swiper 대체
-           ("C-x b" . consult-buffer)      ; counsel-switch-buffer 대체
-           ("C-x C-f" . find-file)         ; 그대로
-           ("M-x" . execute-extended-command) ; 또는 counsel-M-x 유지
-           ("C-c g" . consult-git-grep)
-           ("C-c r" . consult-ripgrep)))
-  ;; note: installment of ripgrep on the system required
-  ;; ex) pacman -S ripgrep
-  ;; 3. 정렬/필터링 개선
-  (use-package orderless
-    :ensure t
-    :custom
-    (completion-styles '(orderless basic))
-    (completion-category-overrides '((file (styles basic partial-completion)))))
+      ;; 2. Enhanced search/navigation
+      (use-package consult
+        :ensure t
+        :bind (("C-x b" . consult-buffer)
+               ("C-x C-f" . find-file)
+               ("M-x" . execute-extended-command)
+               ("C-c g" . consult-git-grep)
+               ("C-c r" . consult-ripgrep))
+        :init
+        ;; Variable to track the last consult-line invocation time
+        (defvar my/last-consult-line-time 0)
 
-  ;; 4. 자동완성 (auto-complete 대체)
-  (use-package company
-    :ensure t
-    :init
-    (global-company-mode)
-    :config
-    (setq company-idle-delay 0.2
-          company-minimum-prefix-length 2))
+        (defun my/consult-line-dwim ()
+          "Consult-line with Do What I Mean behavior.
+If called twice within 0.5s, reuse the previous search term."
+          (interactive)
+          (let* ((now (float-time))
+                 (time-diff (- now my/last-consult-line-time))
+                 (use-last-search (< time-diff 0.5))
+                 ;; Retrieve from consult--line-history
+                 (last-search (car consult--line-history)))
 
-  ;; 5. org-roam 통합
-  (use-package consult-org-roam
-    :ensure t
-    :after org-roam consult
-    :config
-    (consult-org-roam-mode 1)
-    :custom
-    (consult-org-roam-grep-func #'consult-ripgrep)
-    :bind
-    (("C-c n f" . consult-org-roam-file-find)      ; 파일 찾기
-     ("C-c n b" . consult-org-roam-backlinks)      ; 백링크 보기
-     ("C-c n B" . consult-org-roam-backlinks-recursive) ; 재귀 백링크
-     ("C-c n s" . consult-org-roam-search)         ; 내용 검색
-     ("C-c n t" . consult-org-roam-forward-links))) ; 포워드 링크
+            (setq my/last-consult-line-time now)
+
+            (cond
+             ;; When in minibuffer
+             ((minibufferp)
+              (when (and use-last-search last-search)
+                (delete-minibuffer-contents)
+                (insert last-search)))
+             ;; When in regular buffer
+             (use-last-search
+              (when last-search
+                (message "Repeating: %s" last-search)
+                (consult-line last-search)))
+
+             (t
+              (consult-line)))))
+
+        ;; Bind C-s to the DWIM function
+        (global-set-key (kbd "C-s") 'my/consult-line-dwim))
+
+
+      ;; 3. Improved sorting/filtering
+      (use-package orderless
+        :ensure t
+        :custom
+        (completion-styles '(orderless basic))
+        (completion-category-overrides '((file (styles basic partial-completion)))))
+
+      ;; 4. Auto-completion (replaces auto-complete)
+      (use-package company
+        :ensure t
+        :init
+        (global-company-mode)
+        :config
+        (setq company-idle-delay 0.2
+              company-minimum-prefix-length 2))
+
+      ;; Debug functions for checking history contents
+      (defun my/test-search-ring ()
+        "Check search-ring contents"
+        (interactive)
+        (message "search-ring: %S" search-ring)
+        (message "First (car): %s" (car search-ring))
+        (message "Second (cadr): %s" (cadr search-ring))
+        (message "Third (caddr): %s" (caddr search-ring)))
+
+      (defun my/check-history ()
+        "Check various history variables"
+        (interactive)
+        (message "=== History Check ===")
+        (message "search-ring: %S" search-ring)
+        (message "regexp-search-ring: %S" regexp-search-ring)
+        (message "minibuffer-history: %S" (take 5 minibuffer-history))
+        (message "consult--line-history: %S" 
+                 (bound-and-true-p consult--line-history)))
+
+      (global-set-key (kbd "C-c h") 'my/check-history)
+      (global-set-key (kbd "C-c t") 'my/test-search-ring)
+
+      ;; 5. org-roam integration
+      (use-package consult-org-roam
+        :ensure t
+        :after org-roam consult
+        :config
+        (consult-org-roam-mode 1)
+        :custom
+        (consult-org-roam-grep-func #'consult-ripgrep)
+        :bind
+        (("C-c n f" . consult-org-roam-file-find)      ; Find files
+         ("C-c n b" . consult-org-roam-backlinks)      ; View backlinks
+         ("C-c n B" . consult-org-roam-backlinks-recursive) ; Recursive backlinks
+         ("C-c n s" . consult-org-roam-search)         ; Search content
+         ("C-c n t" . consult-org-roam-forward-links))) ; Forward links
 #+END_SRC
+
+#+RESULTS:
+
 
 * Keyboard / Cursor / Shortcuts
 ** My Own Key maps
