@@ -17,7 +17,12 @@ end
 abbr SU sudo -i
 abbr SS sudo systemctl
 
-set -x EDITOR "/usr/bin/emacsclient -t"
+# Set EDITOR based on display environment
+if set -q WAYLAND_DISPLAY; or set -q DISPLAY
+    set -x EDITOR "emacsclient --socket-name=gui-server"
+else
+    set -x EDITOR "emacsclient --socket-name=terminal-server -t"
+end
 set -x IM_MODULE ibus
 set -x GTK_IM_MODULE $IM_MODULE
 set -x QT_IM_MODULE $IM_MODULE

@@ -698,11 +698,11 @@ certain major modes defined in `display-line-numbers-exempt-modes'"
 ;;    ))
 #+END_SRC
 
-* Vertico + Consult + Orderless
+** Vertico / Consult / Orderless
 *** DONE Implement double C-s behavior for repeating previous search
-CLOSED: [2025-11-16 Sun]
+CLOSED: [2025-11-16 Sat]
 :LOGBOOK:
-- State "DONE"       from              [2025-11-16 Sun] \\
+- State "DONE"       from              [2025-11-16 Sat] \\
   Implemented consult-line DWIM (Do What I Mean) functionality that mimics 
   swiper's behavior. When C-s is pressed twice within 0.5 seconds, it 
   automatically reuses the previous search term instead of starting a new 
@@ -710,6 +710,8 @@ CLOSED: [2025-11-16 Sun]
   
   Key implementation details:
   - Uses `consult--line-history` to retrieve the last search term
+  - Safely checks if history exists using `boundp` to prevent errors
+  - Combines time condition AND history existence in `use-last-search`
   - Tracks the time between consecutive C-s presses
   - Automatically inserts previous search when called rapidly
   - Works both in minibuffer and regular buffers
@@ -718,113 +720,119 @@ CLOSED: [2025-11-16 Sun]
 The implementation allows for quick re-search without needing to retype 
 search terms, which is particularly useful when searching for the same 
 pattern multiple times across different locations in a file.
-** History / Change Log
-*** DONE Implement double C-s behavior for repeating previous search
 
+   - Modern completion framework replacing ivy/counsel/swiper
+   - Vertico: vertical completion UI
+   - Consult: practical commands with completion
+   - Orderless: flexible completion style
 
 ** Configuration
 #+BEGIN_SRC emacs-lisp
-      ;; 1. Minibuffer completion framework
-      (use-package vertico
-        :ensure t
-        :init
-        (vertico-mode))
+  ;; 1. Minibuffer completion framework
+  (use-package vertico
+    :ensure t
+    :init
+    (vertico-mode))
 
-      ;; 2. Enhanced search/navigation
-      (use-package consult
-        :ensure t
-        :bind (("C-x b" . consult-buffer)
-               ("C-x C-f" . find-file)
-               ("M-x" . execute-extended-command)
-               ("C-c g" . consult-git-grep)
-               ("C-c r" . consult-ripgrep))
-        :init
-        ;; Variable to track the last consult-line invocation time
-        (defvar my/last-consult-line-time 0)
+  ;; 2. Enhanced search/navigation
+  (use-package consult
+    :ensure t
+    :bind (("C-x b" . consult-buffer)
+           ("C-x C-f" . find-file)
+           ("M-x" . execute-extended-command)
+           ("C-c g" . consult-git-grep)
+           ("C-c r" . consult-ripgrep))
+    :init
+    ;; Variable to track the last consult-line invocation time
+    (defvar my/last-consult-line-time 0)
 
-        (defun my/consult-line-dwim ()
-          "Consult-line with Do What I Mean behavior.
+    (defun my/consult-line-dwim ()
+      "Consult-line with Do What I Mean behavior.
 If called twice within 0.5s, reuse the previous search term."
-          (interactive)
-          (let* ((now (float-time))
-                 (time-diff (- now my/last-consult-line-time))
-                 (use-last-search (< time-diff 0.5))
-                 ;; Retrieve from consult--line-history
-                 (last-search (car consult--line-history)))
+      (interactive)
+      (let* ((now (float-time))
+             (time-diff (- now my/last-consult-line-time))
+             ;; Safely retrieve search history
+             (last-search (and (boundp 'consult--line-history)
+                              consult--line-history
+                              (car consult--line-history)))
+             ;; Check both time condition AND history existence
+             (use-last-search (and (< time-diff 0.5) last-search)))
 
-            (setq my/last-consult-line-time now)
+        (setq my/last-consult-line-time now)
 
-            (cond
-             ;; When in minibuffer
-             ((minibufferp)
-              (when (and use-last-search last-search)
-                (delete-minibuffer-contents)
-                (insert last-search)))
-             ;; When in regular buffer
-             (use-last-search
-              (when last-search
-                (message "Repeating: %s" last-search)
-                (consult-line last-search)))
+        (cond
+         ;; Inside minibuffer
+         ((minibufferp)
+          (when use-last-search
+            (delete-minibuffer-contents)
+            (insert last-search)))
 
-             (t
-              (consult-line)))))
+         ;; Regular buffer - reuse previous search
+         (use-last-search
+          (message "Repeating: %s" last-search)
+          (consult-line last-search))
 
-        ;; Bind C-s to the DWIM function
-        (global-set-key (kbd "C-s") 'my/consult-line-dwim))
+         ;; Normal search
+         (t
+          (consult-line)))))
+
+    ;; Bind C-s to the DWIM function
+    (global-set-key (kbd "C-s") 'my/consult-line-dwim))
 
 
-      ;; 3. Improved sorting/filtering
-      (use-package orderless
-        :ensure t
-        :custom
-        (completion-styles '(orderless basic))
-        (completion-category-overrides '((file (styles basic partial-completion)))))
+  ;; 3. Improved sorting/filtering
+  (use-package orderless
+    :ensure t
+    :custom
+    (completion-styles '(orderless basic))
+    (completion-category-overrides '((file (styles basic partial-completion)))))
 
-      ;; 4. Auto-completion (replaces auto-complete)
-      (use-package company
-        :ensure t
-        :init
-        (global-company-mode)
-        :config
-        (setq company-idle-delay 0.2
-              company-minimum-prefix-length 2))
+  ;; 4. Auto-completion (replaces auto-complete)
+  (use-package company
+    :ensure t
+    :init
+    (global-company-mode)
+    :config
+    (setq company-idle-delay 0.2
+          company-minimum-prefix-length 2))
 
-      ;; Debug functions for checking history contents
-      (defun my/test-search-ring ()
-        "Check search-ring contents"
-        (interactive)
-        (message "search-ring: %S" search-ring)
-        (message "First (car): %s" (car search-ring))
-        (message "Second (cadr): %s" (cadr search-ring))
-        (message "Third (caddr): %s" (caddr search-ring)))
+  ;; Debug functions for checking history contents
+  (defun my/test-search-ring ()
+    "Check search-ring contents"
+    (interactive)
+    (message "search-ring: %S" search-ring)
+    (message "First (car): %s" (car search-ring))
+    (message "Second (cadr): %s" (cadr search-ring))
+    (message "Third (caddr): %s" (caddr search-ring)))
 
-      (defun my/check-history ()
-        "Check various history variables"
-        (interactive)
-        (message "=== History Check ===")
-        (message "search-ring: %S" search-ring)
-        (message "regexp-search-ring: %S" regexp-search-ring)
-        (message "minibuffer-history: %S" (take 5 minibuffer-history))
-        (message "consult--line-history: %S" 
-                 (bound-and-true-p consult--line-history)))
+  (defun my/check-history ()
+    "Check various history variables"
+    (interactive)
+    (message "=== History Check ===")
+    (message "search-ring: %S" search-ring)
+    (message "regexp-search-ring: %S" regexp-search-ring)
+    (message "minibuffer-history: %S" (take 5 minibuffer-history))
+    (message "consult--line-history: %S" 
+             (bound-and-true-p consult--line-history)))
 
-      (global-set-key (kbd "C-c h") 'my/check-history)
-      (global-set-key (kbd "C-c t") 'my/test-search-ring)
+  (global-set-key (kbd "C-c h") 'my/check-history)
+  (global-set-key (kbd "C-c t") 'my/test-search-ring)
 
-      ;; 5. org-roam integration
-      (use-package consult-org-roam
-        :ensure t
-        :after org-roam consult
-        :config
-        (consult-org-roam-mode 1)
-        :custom
-        (consult-org-roam-grep-func #'consult-ripgrep)
-        :bind
-        (("C-c n f" . consult-org-roam-file-find)      ; Find files
-         ("C-c n b" . consult-org-roam-backlinks)      ; View backlinks
-         ("C-c n B" . consult-org-roam-backlinks-recursive) ; Recursive backlinks
-         ("C-c n s" . consult-org-roam-search)         ; Search content
-         ("C-c n t" . consult-org-roam-forward-links))) ; Forward links
+  ;; 5. org-roam integration
+  (use-package consult-org-roam
+    :ensure t
+    :after org-roam consult
+    :config
+    (consult-org-roam-mode 1)
+    :custom
+    (consult-org-roam-grep-func #'consult-ripgrep)
+    :bind
+    (("C-c n f" . consult-org-roam-file-find)      ; Find files
+     ("C-c n b" . consult-org-roam-backlinks)      ; View backlinks
+     ("C-c n B" . consult-org-roam-backlinks-recursive) ; Recursive backlinks
+     ("C-c n s" . consult-org-roam-search)         ; Search content
+     ("C-c n t" . consult-org-roam-forward-links))) ; Forward links
 #+END_SRC
 
 #+RESULTS:
@@ -937,6 +945,8 @@ If called twice within 0.5s, reuse the previous search term."
 ** Input Method (Korean)
 #+BEGIN_SRC emacs-lisp
   (setq default-input-method "korean-hangul3f")
+
+  (global-set-key (kbd "S-SPC") 'toggle-input-method)
 #+END_SRC
 
 ** Projectile

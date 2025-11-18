@@ -2,7 +2,13 @@
 ;;; This format is meant to be slightly human-readable;
 ;;; nevertheless, you probably don't want to edit it.
 ;;; -*- End Of Bookmark File Format Version Stamp -*-
-(("HCF Thank you eGift"
+(("\"JEONGOON.SPACE\""
+ (filename . "~/git/jeongoon.space/")
+ (front-context-string . "CODING_PREFERENC")
+ (rear-context-string . "90 Nov 16 13:58 ")
+ (position . 366)
+ (last-modified 26906 17502 992734 533000))
+("HCF Thank you eGift"
  (filename . "~/gtd/tickler.org")
  (front-context-string . "** TODO HCF Than")
  (rear-context-string . " special check\n\n")
@@ -64,11 +70,11 @@
  (position . 90)
  (last-modified 26901 29681 669404 505000))
 ("org-refile-last-stored"
- (filename . "~/gtd/gtd.org")
- (front-context-string . "** TODO HCF Than")
- (rear-context-string . "mployee.\n:END:\n\n")
- (position . 8926)
- (last-modified 26824 2409 511833 57000))
+ (filename . "~/git/jeongoon.space/TODO.org")
+ (front-context-string . "** DONE [#A] Fix")
+ (rear-context-string . "2025-11-16 Sat]\n")
+ (position . 7559)
+ (last-modified 26907 25353 637200 980000))
 ("EnglishReading"
  (filename . "~/EnglishReading/")
  (front-context-string . "Principls for De")
